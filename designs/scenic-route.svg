@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="4500" height="5400" viewBox="0 0 4500 5400">
+<defs>
+  <style>
+    .pb { font-family: "Poppins"; font-weight: 700; }
+    .pm { font-family: "Poppins"; font-weight: 500; }
+    .pl { font-family: "Poppins"; font-weight: 300; }
+    .li { font-family: "Lora"; font-style: italic; font-weight: 600; }
+  </style>
+</defs>
+
+<path id="archTop" d="M 530 2780 A 1720 1720 0 0 1 3970 2780" fill="none"/>
+<text class="pb" font-size="290" fill="#F5EBDC" letter-spacing="26">
+  <textPath href="#archTop" startOffset="50%" text-anchor="middle">TAKE THE SCENIC ROUTE</textPath>
+</text>
+<clipPath id="circ"><circle cx="2250" cy="2780" r="1400"/></clipPath>
+<g clip-path="url(#circ)">
+  <rect x="850" y="1380" width="2800" height="900" fill="#F5EBDC"/>
+  <rect x="850" y="2280" width="2800" height="420" fill="#F2B880"/>
+  <rect x="850" y="2700" width="2800" height="360" fill="#E2725B"/>
+  <rect x="850" y="3060" width="2800" height="1120" fill="#B23A48"/>
+  <circle cx="2250" cy="2520" r="430" fill="#EAA933"/>
+  <path d="M 850 3110 L 1450 2220 L 2070 3110 Z" fill="#4E8098"/>
+  <path d="M 1930 3110 L 2590 2020 L 3270 3110 Z" fill="#2E2420"/>
+  <path d="M 2460 2235 L 2590 2020 L 2720 2235 L 2630 2235 L 2590 2300 L 2550 2235 Z" fill="#F5EBDC"/>
+  <path d="M 2770 3110 L 3370 2420 L 3650 3110 Z" fill="#4E8098"/>
+  <rect x="850" y="3110" width="2800" height="1400" fill="#2E2420"/>
+  <path d="M 850 3250 Q 2250 3110 3650 3250 L 3650 4180 L 850 4180 Z" fill="#241C19"/>
+<path d="M 1200 3210 l -120 0 l 120 -360 l 120 360 Z" fill="#1B2E23"/><rect x="1182" y="3210" width="36" height="90" fill="#141210"/><path d="M 1430 3210 l -84 0 l 84 -251 l 84 251 Z" fill="#1B2E23"/><rect x="1418" y="3210" width="25" height="62" fill="#141210"/><path d="M 3030 3210 l -108 0 l 108 -324 l 108 324 Z" fill="#1B2E23"/><rect x="3014" y="3210" width="32" height="81" fill="#141210"/><path d="M 3330 3210 l -78 0 l 78 -234 l 78 234 Z" fill="#1B2E23"/><rect x="3319" y="3210" width="23" height="58" fill="#141210"/><path d="M 2160 3210 l -66 0 l 66 -198 l 66 198 Z" fill="#1B2E23"/><rect x="2151" y="3210" width="19" height="49" fill="#141210"/></g>
+<circle cx="2250" cy="2780" r="1400" fill="none" stroke="#F5EBDC" stroke-width="70"/>
+<circle cx="2250" cy="2780" r="1540" fill="none" stroke="#F5EBDC" stroke-width="16" stroke-dasharray="4 70" stroke-linecap="round"/>
+<text class="pm" x="2250" y="4720" font-size="150" fill="#F5EBDC" letter-spacing="26" text-anchor="middle">MOUNTAINS &#8226; FRESH AIR &#8226; GOOD VIBES</text>
+
+</svg>

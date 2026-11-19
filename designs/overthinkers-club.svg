@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="4500" height="5400" viewBox="0 0 4500 5400">
+<path id="archV" d="M 440.0 2450 A 2050 2050 0 0 1 4060.0 2450" fill="none"/>
+<text font-family="Poppins" font-weight="700" font-size="360" fill="#F5EBDC" letter-spacing="18">
+  <textPath href="#archV" startOffset="50%" text-anchor="middle">OVERTHINKERS</textPath>
+</text>
+<text font-family="Poppins" font-weight="700" x="2250.0" y="3200" font-size="760" fill="#EAA933" letter-spacing="80" text-anchor="middle" stroke="#F5EBDC" stroke-width="10">CLUB</text>
+<g transform="translate(2250.0,1650)">
+  <path d="M 90 -170 A 205 205 0 1 0 90 170 A 165 165 0 1 1 90 -170 Z" fill="#F5EBDC"/>
+  <circle cx="-215" cy="-95" r="16" fill="#F5EBDC"/><circle cx="-300" cy="30" r="11" fill="#F5EBDC"/>
+  <circle cx="-160" cy="115" r="9" fill="#F5EBDC"/><circle cx="255" cy="-40" r="12" fill="#F5EBDC"/>
+  <circle cx="305" cy="90" r="8" fill="#F5EBDC"/>
+</g>
+<g transform="translate(2250.0,3620)">
+  <line x1="-1300" y1="0" x2="-640" y2="0" stroke="#F5EBDC" stroke-width="14"/>
+  <line x1="640" y1="0" x2="1300" y2="0" stroke="#F5EBDC" stroke-width="14"/>
+  <text font-family="Poppins" font-weight="500" x="0" y="52" font-size="150" fill="#F5EBDC" letter-spacing="46" text-anchor="middle">EST. 3AM</text>
+</g>
+<text font-family="Poppins" font-weight="300" font-style="italic" x="2250.0" y="4080" font-size="140" fill="#8FA6C9" letter-spacing="4" text-anchor="middle">meetings held nightly &#8226; attendance mandatory</text>
+</svg>

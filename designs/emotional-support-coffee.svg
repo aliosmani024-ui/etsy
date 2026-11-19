@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="4500" height="5400" viewBox="0 0 4500 5400">
+<defs>
+  <style>
+    .pb { font-family: "Poppins"; font-weight: 700; }
+    .pm { font-family: "Poppins"; font-weight: 500; }
+    .pl { font-family: "Poppins"; font-weight: 300; }
+    .li { font-family: "Lora"; font-style: italic; font-weight: 600; }
+  </style>
+</defs>
+
+<path id="arch3" d="M 500.0 2150 A 1900 1900 0 0 1 4000.0 2150" fill="none"/>
+<text class="pb" font-size="300" fill="#F5EBDC" letter-spacing="24">
+  <textPath href="#arch3" startOffset="50%" text-anchor="middle">EMOTIONAL SUPPORT</textPath>
+</text>
+<g stroke="#F5EBDC" stroke-width="48" stroke-linecap="round" fill="none">
+  <path d="M 1950.0 2250 q -70 -140 30 -240 q 85 -85 25 -190" />
+  <path d="M 2280.0 2210 q -70 -140 30 -240 q 85 -85 25 -190" />
+  <path d="M 2610.0 2250 q -70 -140 30 -240 q 85 -85 25 -190" />
+</g>
+<g>
+  <path d="M 1690.0 2620 L 2810.0 2620 L 2720.0 4000 L 1780.0 4000 Z" fill="#C89F7B" stroke="#F5EBDC" stroke-width="46"/>
+  <rect x="1610.0" y="2450" width="1280" height="190" rx="70" fill="#F5EBDC"/>
+  <rect x="1730.0" y="2320" width="1040" height="150" rx="60" fill="#C89F7B" stroke="#F5EBDC" stroke-width="40"/>
+  <path d="M 1715.0 2980 L 2785.0 2980 L 2748.0 3540 L 1752.0 3540 Z" fill="#8A6248" stroke="#F5EBDC" stroke-width="42"/>
+  <path d="M 1920.0 3210 q -80 -95 0 -172 q 77 -77 154 0 q 77 -77 154 0 q 80 77 0 172 l -154 150 Z" fill="#F5EBDC" transform="translate(176,0)"/>
+</g>
+<text class="li" x="2250.0" y="4700" font-size="640" fill="#F5EBDC" text-anchor="middle">coffee</text>
+
+</svg>

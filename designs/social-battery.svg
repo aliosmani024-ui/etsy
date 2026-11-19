@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="4500" height="5400" viewBox="0 0 4500 5400">
+<defs>
+  <style>
+    .pb { font-family: "Poppins"; font-weight: 700; }
+    .pm { font-family: "Poppins"; font-weight: 500; }
+    .pl { font-family: "Poppins"; font-weight: 300; }
+    .li { font-family: "Lora"; font-style: italic; font-weight: 600; }
+  </style>
+</defs>
+
+<text class="pb" x="2250.0" y="1900" font-size="430" fill="#F5EBDC" letter-spacing="40" text-anchor="middle">SOCIAL BATTERY</text>
+<rect x="950" y="2280" width="2600" height="1150" rx="130" fill="none" stroke="#F5EBDC" stroke-width="60"/>
+<rect x="3590" y="2665.0" width="150" height="380" rx="60" fill="#F5EBDC"/>
+<rect x="1060" y="2390" width="468" height="930" rx="60" fill="#E4572E"/>
+<rect x="1553" y="2390" width="468" height="930" rx="60" fill="none" stroke="#B9B9B9" stroke-width="14" stroke-dasharray="30 30" opacity="0.55"/><rect x="2046" y="2390" width="468" height="930" rx="60" fill="none" stroke="#B9B9B9" stroke-width="14" stroke-dasharray="30 30" opacity="0.55"/><rect x="2539" y="2390" width="468" height="930" rx="60" fill="none" stroke="#B9B9B9" stroke-width="14" stroke-dasharray="30 30" opacity="0.55"/><rect x="3032" y="2390" width="468" height="930" rx="60" fill="none" stroke="#B9B9B9" stroke-width="14" stroke-dasharray="30 30" opacity="0.55"/>
+<text class="pl" x="2250.0" y="4050" font-size="260" font-style="italic" fill="#B9B9B9" letter-spacing="14" text-anchor="middle">please recharge later</text>
+
+</svg>

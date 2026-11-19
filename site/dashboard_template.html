@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shirt Factory — AI Agent Room</title>
+<style>
+  :root{
+    --bg:#07070f; --panel:#0d1120; --panel2:#101830; --line:#1c2a4a;
+    --pink:#ff2d78; --cyan:#29e6ff; --gold:#ffd24a; --green:#3ddc84;
+    --red:#ff4d4d; --text:#cfd8ff; --dim:#5d6b96;
+    --mono:"Courier New", ui-monospace, monospace;
+  }
+  *{box-sizing:border-box; margin:0; padding:0}
+  body{background:var(--bg); color:var(--text); font-family:var(--mono); min-height:100vh}
+
+  .topbar{display:flex; align-items:center; gap:42px; padding:14px 26px;
+    border-bottom:2px solid var(--pink); background:#05050c;
+    box-shadow:0 6px 30px rgba(255,45,120,.15); position:sticky; top:0; z-index:50}
+  .stat .lbl{font-size:10px; letter-spacing:2px; color:var(--dim); text-transform:uppercase}
+  .stat .val{font-size:20px; color:var(--gold); font-weight:bold; margin-top:2px}
+  .stat .val.live{color:var(--green)}
+  .spacer{flex:1}
+  .treasury-btn{background:linear-gradient(180deg,#ff3d6e,#e01d50); color:#fff; border:none;
+    font-family:var(--mono); font-weight:bold; font-size:14px; padding:10px 22px; border-radius:10px;
+    cursor:pointer; box-shadow:0 0 18px rgba(255,45,120,.5)}
+  .treasury-btn:hover{filter:brightness(1.1)}
+
+  .room-wrap{max-width:1120px; margin:26px auto 0; padding:0 16px}
+  .room-frame{position:relative; border:1px solid var(--line); border-radius:14px;
+    background:radial-gradient(ellipse at 50% 42%, #0e1230 0%, #070812 62%, #05060d 100%);
+    box-shadow:0 0 60px rgba(255,45,120,.08), inset 0 0 80px rgba(41,230,255,.03); overflow:hidden}
+  .stage{position:relative; width:1400px; height:800px; margin:0 auto; transform-origin:top left}
+  .stage svg.roomsvg{position:absolute; inset:0}
+
+  .agent{position:absolute; width:66px; height:100px; transform:translate(-50%,-100%); transform-origin:50% 100%; transition:none; z-index:10}
+  .agent .sprite{width:66px; height:82px; image-rendering:pixelated}
+  .agent.flip .sprite{transform:scaleX(-1)}
+  .agent .tag{position:absolute; left:50%; transform:translateX(-50%); top:82px; text-align:center; white-space:nowrap}
+  .agent .nm{font-size:12px; font-weight:bold; color:var(--gold); text-shadow:0 0 8px rgba(0,0,0,.9)}
+  .agent .rl{font-size:9px; color:#9fb0e8}
+  .badge{display:inline-block; font-size:9px; font-weight:bold; padding:2px 8px; border-radius:6px; margin-top:2px; color:#04120a}
+  .badge.idle{background:var(--green)} .badge.working{background:var(--gold); color:#241a00}
+  .badge.blocked{background:var(--red); color:#fff}
+  .bubble{position:absolute; bottom:106px; left:50%; transform:translateX(-50%); background:#f5f7ff; color:#111a33;
+    font-size:10px; padding:6px 9px; border-radius:8px; white-space:nowrap; opacity:0; transition:opacity .3s; pointer-events:none; z-index:20}
+  .bubble:after{content:""; position:absolute; top:100%; left:50%; margin-left:-5px; border:5px solid transparent; border-top-color:#f5f7ff}
+  .bubble.show{opacity:1}
+  .bob{animation:bob 1.15s ease-in-out infinite}
+  @keyframes bob{0%,100%{margin-top:0}50%{margin-top:-3px}}
+
+  .livecam{position:absolute; top:14px; left:16px; z-index:40; display:flex; align-items:center; gap:8px;
+    background:rgba(5,6,14,.72); border:1px solid #3a1420; border-radius:8px; padding:6px 12px;
+    font-size:11px; letter-spacing:2px; color:#ffd7e6}
+  .livecam .dot{width:9px; height:9px; border-radius:50%; background:#ff2d3d; box-shadow:0 0 10px #ff2d3d;
+    animation:blink 1.1s steps(1) infinite}
+  @keyframes blink{50%{opacity:.25}}
+  .livecam .clock{color:#8fe3ff; letter-spacing:1px}
+  .recbars{position:absolute; top:14px; right:16px; z-index:40; font-size:10px; letter-spacing:2px;
+    color:#9fb0e8; background:rgba(5,6,14,.72); border:1px solid var(--line); border-radius:8px; padding:6px 12px}
+  .mglow{position:absolute; width:78px; height:50px; transform:translate(-50%,-50%); z-index:5; pointer-events:none;
+    background:radial-gradient(ellipse, rgba(120,240,255,.5) 0%, rgba(120,240,255,0) 70%); opacity:0; transition:opacity .4s}
+  .mglow.on{opacity:1; animation:flick 1.6s infinite}
+  @keyframes flick{0%,100%{opacity:.9}45%{opacity:.55}60%{opacity:.95}80%{opacity:.7}}
+  .scanlines{position:absolute; inset:0; z-index:30; pointer-events:none; border-radius:14px;
+    background:repeating-linear-gradient(0deg, rgba(255,255,255,.03) 0 1px, transparent 1px 4px),
+               radial-gradient(ellipse at 50% 45%, transparent 52%, rgba(0,0,0,.55) 100%)}
+  .holo{position:absolute; z-index:6; pointer-events:none; width:54px; height:54px;
+    transform:translate(-50%,-50%); animation:holofloat 3.2s ease-in-out infinite;
+    filter:drop-shadow(0 0 10px rgba(41,230,255,.8))}
+  @keyframes holofloat{0%,100%{margin-top:0; opacity:.85}50%{margin-top:-9px; opacity:1}}
+  .dust{position:absolute; width:3px; height:3px; border-radius:50%; z-index:7; pointer-events:none;
+    animation:drift linear infinite}
+  @keyframes drift{0%{transform:translateY(0); opacity:0}15%{opacity:.7}85%{opacity:.4}100%{transform:translateY(-130px); opacity:0}}
+  .cat{position:absolute; width:44px; height:58px; transform:translate(-50%,-100%); z-index:9; pointer-events:none}
+  .cat svg{width:44px; height:58px; image-rendering:pixelated}
+  .cat.flip svg{transform:scaleX(-1)}
+  .zzz{position:absolute; bottom:60px; left:60%; font-size:13px; color:#8fe3ff; opacity:0;
+    transition:opacity .4s; text-shadow:0 0 6px rgba(41,230,255,.8)}
+  .zzz.show{opacity:1; animation:holofloat 2s ease-in-out infinite}
+  .alertbar{display:none; max-width:1120px; margin:14px auto 0; padding:10px 18px; border:1px solid #ff3b3b;
+    border-radius:10px; background:rgba(60,8,14,.55); color:#ffb9b9; font-size:13px; letter-spacing:1px;
+    animation:alertpulse 1.6s ease-in-out infinite}
+  .alertbar.on{display:block}
+  @keyframes alertpulse{0%,100%{box-shadow:0 0 6px rgba(255,59,59,.25)}50%{box-shadow:0 0 22px rgba(255,59,59,.65)}}
+  .alertbar b{color:#ff6b6b}
+
+  .panel{max-width:1120px; margin:22px auto; padding:18px 22px; border:1px solid var(--line);
+    border-radius:12px; background:linear-gradient(180deg, var(--panel2), var(--panel))}
+  .panel h2{color:var(--gold); font-size:16px; margin-bottom:12px; letter-spacing:1px}
+  .pipeline{display:grid; grid-template-columns:repeat(4,1fr); gap:12px}
+  .stagecard{border:1px solid var(--line); border-radius:10px; padding:12px; background:#0a0f22}
+  .stagecard .nm{font-size:12px; font-weight:bold; letter-spacing:1px; text-transform:uppercase}
+  .stagecard .st{font-size:11px; margin-top:6px; font-weight:bold}
+  .stagecard .dt{font-size:10px; color:var(--dim); margin-top:6px; line-height:1.5}
+  .st.done{color:var(--green)} .st.blocked{color:var(--red)} .st.running{color:var(--gold)}
+
+  .shelf{display:grid; grid-template-columns:repeat(5,1fr); gap:14px}
+  .shirt{border:1px solid var(--line); border-radius:10px; overflow:hidden; background:#191b26}
+  .shirt img{width:100%; display:block; aspect-ratio:5/6; object-fit:cover}
+  .shirt .cap{padding:8px 10px; font-size:10px; color:#9fb0e8; line-height:1.5}
+  .shirt .cap b{color:var(--text); font-size:11px}
+  .shirt .price{color:var(--green); font-weight:bold}
+
+  .feed div.row{display:flex; gap:14px; padding:9px 4px; border-bottom:1px solid #131c36; font-size:13px}
+  .feed .t{color:var(--dim); min-width:64px}
+  .feed .k{font-weight:bold}
+  .k.created{color:var(--cyan)} .k.status_change{color:var(--gold)} .k.blocked{color:var(--red)}
+  .k.posted{color:var(--green)} .k.failed{color:var(--red)}
+
+  .modal-bg{position:fixed; inset:0; background:rgba(3,4,10,.82); display:none; z-index:100;
+    align-items:center; justify-content:center}
+  .modal-bg.open{display:flex}
+  .modal{width:min(560px, 92vw); background:var(--panel2); border:1px solid var(--pink); border-radius:14px;
+    padding:26px; box-shadow:0 0 60px rgba(255,45,120,.3)}
+  .modal h3{color:var(--pink); margin-bottom:14px}
+  .modal p, .modal li{font-size:13px; line-height:1.7; color:var(--text)}
+  .modal ol{margin:10px 0 10px 20px}
+  .modal .close{float:right; background:none; border:1px solid var(--line); color:var(--dim);
+    font-family:var(--mono); padding:4px 10px; border-radius:8px; cursor:pointer}
+  .modal code{background:#060a18; color:var(--cyan); padding:2px 6px; border-radius:4px; font-size:12px}
+  .rowline{display:flex; justify-content:space-between; border-bottom:1px dashed #22305a; padding:8px 0; font-size:13px}
+  .rowline .money{color:var(--gold); font-weight:bold}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="stat"><div class="lbl">Total Revenue</div><div class="val" id="revenue">$0.00</div></div>
+  <div class="stat"><div class="lbl">Spent Today</div><div class="val" id="spent">$0.00</div></div>
+  <div class="stat"><div class="lbl">Daily Cap</div><div class="val" id="cap">$5.00</div></div>
+  <div class="spacer"></div>
+  <button class="treasury-btn" onclick="document.getElementById('treasury').classList.add('open')">&#128176; Treasury</button>
+</div>
+
+<div class="alertbar" id="alertbar"></div>
+
+<div class="room-wrap">
+  <div class="room-frame" id="roomframe">
+    <div class="livecam"><span class="dot"></span> LIVE &#8226; AGENT CAM <span class="clock" id="camclock">00:00:00</span></div>
+    <div class="recbars">REC &#9679; 2 ROOMS &#8226; 3 BOTS + 1 CAT</div>
+    <div class="scanlines"></div>
+    <div class="stage" id="stage">
+      <svg class="roomsvg" viewBox="0 0 1400 800" width="1400" height="800">
+        <defs>
+          <filter id="glowP" x="-60%" y="-60%" width="220%" height="220%">
+            <feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <filter id="glowC" x="-60%" y="-60%" width="220%" height="220%">
+            <feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <linearGradient id="wallL" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#1c2350"/><stop offset="1" stop-color="#121740"/>
+          </linearGradient>
+          <linearGradient id="wallR" x1="1" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#181d46"/><stop offset="1" stop-color="#0f1338"/>
+          </linearGradient>
+          <linearGradient id="floorG" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#262e64"/><stop offset="1" stop-color="#181d48"/>
+          </linearGradient>
+          <linearGradient id="screenA" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#123a52"/><stop offset="1" stop-color="#0a2236"/>
+          </linearGradient>
+        </defs>
+
+        <!-- ================= floor ================= -->
+        <polygon points="530,250 970,475 530,700 90,475" fill="url(#floorG)"/>
+        <g stroke="#323b78" stroke-width="1.5" opacity="0.65">
+          <line x1="200" y1="419" x2="640" y2="644"/><line x1="310" y1="363" x2="750" y2="588"/>
+          <line x1="420" y1="306" x2="860" y2="531"/><line x1="640" y1="306" x2="200" y2="531"/>
+          <line x1="750" y1="363" x2="310" y2="588"/><line x1="860" y1="419" x2="420" y2="644"/>
+        </g>
+        <!-- rug -->
+        <polygon points="530,510 640,566 530,622 420,566" fill="#2c3670" stroke="#3d4a94" stroke-width="3"/>
+        <polygon points="530,528 605,566 530,604 455,566" fill="none" stroke="#3d4a94" stroke-width="2" opacity=".8"/>
+
+        <!-- ================= walls ================= -->
+        <polygon points="90,475 530,250 530,60 90,285" fill="url(#wallL)"/>
+        <polygon points="530,250 970,475 970,285 530,60" fill="url(#wallR)"/>
+
+        <!-- left wall: window with stars -->
+        <polygon points="150,410 300,333 300,203 150,280" fill="#0a1030" stroke="#323b78" stroke-width="3"/>
+        <circle cx="205" cy="280" r="4" fill="#fff" opacity=".85"/><circle cx="255" cy="305" r="2.5" fill="#9fd8ff" opacity=".85"/>
+        <circle cx="180" cy="330" r="2" fill="#ffd24a" opacity=".8"/><circle cx="275" cy="250" r="2" fill="#fff" opacity=".6"/>
+        <circle cx="228" cy="243" r="1.6" fill="#fff" opacity=".7"/>
+        <!-- left wall: shelf with books -->
+        <polygon points="330,345 450,283 450,270 330,332" fill="#2b3468"/>
+        <g>
+          <polygon points="338,330 352,323 352,293 338,300" fill="#d33f49"/>
+          <polygon points="356,321 370,314 370,286 356,293" fill="#eaa933"/>
+          <polygon points="374,312 388,305 388,279 374,286" fill="#29e6ff"/>
+          <polygon points="392,303 404,297 404,273 392,279" fill="#3ddc84"/>
+        </g>
+        <!-- hanging neon sign over the back corner -->
+        <g filter="url(#glowP)">
+          <line x1="475" y1="60" x2="475" y2="92" stroke="#3a4380" stroke-width="2"/>
+          <line x1="585" y1="60" x2="585" y2="92" stroke="#3a4380" stroke-width="2"/>
+          <rect x="408" y="92" width="244" height="34" rx="8" fill="#0a0d20" stroke="#ff2d78" stroke-width="2.5"/>
+          <text x="530" y="115" font-family="Courier New" font-weight="bold" font-size="19" fill="#ff2d78"
+            text-anchor="middle" letter-spacing="2">SHIRT FACTORY</text>
+        </g>
+
+        <!-- right wall: posters -->
+        <polygon points="590,120 665,158 665,238 590,200" fill="#131a3e" stroke="#323b78" stroke-width="2"/>
+        <polygon points="602,140 653,166 653,208 602,182" fill="#ff2d78" opacity=".3"/>
+        <polygon points="685,168 760,206 760,286 685,248" fill="#101637" stroke="#323b78" stroke-width="2"/>
+        <polygon points="697,188 748,214 748,256 697,230" fill="#29e6ff" opacity=".25"/>
+        <!-- right wall: big status screen -->
+        <polygon points="790,222 930,293 930,398 790,327" fill="#081026" stroke="#323b78" stroke-width="3"/>
+        <polygon points="802,242 918,301 918,380 802,321" fill="url(#screenA)"/>
+        <polyline points="812,300 838,284 856,294 880,270 904,280" stroke="#29e6ff" stroke-width="2.5" fill="none" filter="url(#glowC)"/>
+        <text x="820" y="330" font-family="Courier New" font-size="11" fill="#3ddc84" transform="skewY(27)" opacity="0">.</text>
+
+        <!-- neon strips -->
+        <g filter="url(#glowP)" stroke="#ff2d78" stroke-width="4" stroke-linecap="round">
+          <line x1="90" y1="475" x2="90" y2="285"/>
+          <line x1="90" y1="285" x2="530" y2="60"/>
+          <line x1="530" y1="60" x2="970" y2="285"/>
+          <line x1="970" y1="285" x2="970" y2="475"/>
+        </g>
+        <g filter="url(#glowC)" stroke="#29e6ff" stroke-width="4" stroke-linecap="round" opacity=".95">
+          <line x1="90" y1="475" x2="530" y2="700"/>
+          <line x1="530" y1="700" x2="970" y2="475"/>
+        </g>
+
+        <!-- ================= server rack (back center) ================= -->
+        <polygon points="492,232 568,271 568,366 492,327" fill="#0d1330" stroke="#323b78" stroke-width="2"/>
+        <circle cx="508" cy="272" r="3.4" fill="#3ddc84" filter="url(#glowC)">
+          <animate attributeName="opacity" values="1;.2;1" dur="1.6s" repeatCount="indefinite"/></circle>
+        <circle cx="508" cy="294" r="3.4" fill="#ffd24a">
+          <animate attributeName="opacity" values=".3;1;.3" dur="2.2s" repeatCount="indefinite"/></circle>
+        <circle cx="508" cy="316" r="3.4" fill="#ff2d78" filter="url(#glowP)">
+          <animate attributeName="opacity" values="1;.35;1" dur="1.1s" repeatCount="indefinite"/></circle>
+        <line x1="522" y1="285" x2="558" y2="304" stroke="#22305a" stroke-width="2.5"/>
+        <line x1="522" y1="307" x2="558" y2="326" stroke="#22305a" stroke-width="2.5"/>
+
+        <!-- ================= coffee station (left) ================= -->
+        <polygon points="120,430 180,399 216,417 156,448" fill="#3a4380"/>
+        <polygon points="120,430 156,448 156,482 120,464" fill="#232a58"/>
+        <polygon points="156,448 216,417 216,451 156,482" fill="#2b3468"/>
+        <polygon points="158,394 186,380 202,388 174,402" fill="#14172e" stroke="#3d4a94" stroke-width="2"/>
+        <rect x="168" y="398" width="12" height="14" fill="#0e1128" stroke="#3d4a94" stroke-width="1.5" transform="skewY(27) translate(0,-90)" opacity="0"/>
+
+
+        <!-- ================= DESK TEMPLATE x3: desk, monitor, keyboard, chair ================= -->
+        <!-- DENNIS workstation (left) -->
+        <g id="ws-dennis">
+          <polygon points="200,470 320,409 396,447 276,508" fill="#3f4890"/>
+          <polygon points="200,470 276,508 276,553 200,515" fill="#262e64"/>
+          <polygon points="276,508 396,447 396,492 276,553" fill="#303a7c"/>
+          <polygon points="252,398 306,371 332,384 278,411" fill="#0b1230" stroke="#4b56a0" stroke-width="2.5"/>
+          <polygon points="257,399 303,376 327,388 281,411" fill="url(#screenA)"/>
+          <polyline points="264,396 276,388 285,392 297,383" stroke="#29e6ff" stroke-width="2" fill="none" opacity=".9">
+            <animate attributeName="opacity" values=".9;.4;.9" dur="2.4s" repeatCount="indefinite"/></polyline>
+          <polygon points="288,412 296,408 300,424 292,428" fill="#1a2150"/>
+          <polygon points="300,432 344,410 362,419 318,441" fill="#161c44" stroke="#3d4a94" stroke-width="1.5"/>
+          <ellipse cx="235" cy="452" rx="8" ry="4.6" fill="#6f4e37"/>
+          <rect x="230" y="439" width="9" height="13" fill="#f5ebdc"/>
+          <!-- chair -->
+          <ellipse cx="300" cy="536" rx="20" ry="9" fill="#14172e"/>
+          <rect x="296" y="500" width="8" height="34" fill="#14172e"/>
+          <polygon points="278,506 322,484 322,458 278,480" fill="#1a2150" stroke="#2b3468" stroke-width="2"/>
+        </g>
+
+        <!-- MATT workstation (back right) -->
+        <g id="ws-matt">
+          <polygon points="560,364 680,303 756,341 636,402" fill="#3f4890"/>
+          <polygon points="560,364 636,402 636,447 560,409" fill="#262e64"/>
+          <polygon points="636,402 756,341 756,386 636,447" fill="#303a7c"/>
+          <polygon points="612,292 666,265 692,278 638,305" fill="#0b1230" stroke="#4b56a0" stroke-width="2.5"/>
+          <polygon points="617,293 663,270 687,282 641,305" fill="#1c2f1e"/>
+          <rect x="628" y="278" width="7" height="7" fill="#3ddc84" transform="skewY(-27) rotate(27 631 281)" opacity="0"/>
+          <g fill="#3ddc84" opacity=".9">
+            <polygon points="627,291 637,286 637,290 627,295"/>
+            <polygon points="641,284 651,279 651,283 641,288"/>
+            <animate attributeName="opacity" values=".9;.45;.9" dur="1.9s" repeatCount="indefinite"/>
+          </g>
+          <polygon points="648,306 656,302 660,318 652,322" fill="#1a2150"/>
+          <polygon points="660,326 704,304 722,313 678,335" fill="#161c44" stroke="#3d4a94" stroke-width="1.5"/>
+          <rect x="596" y="352" width="18" height="4" fill="#c9d4ff" transform="rotate(-27 605 354)"/>
+          <!-- chair -->
+          <ellipse cx="612" cy="432" rx="20" ry="9" fill="#14172e"/>
+          <rect x="608" y="396" width="8" height="34" fill="#14172e"/>
+          <polygon points="590,402 634,380 634,354 590,376" fill="#1a2150" stroke="#2b3468" stroke-width="2"/>
+        </g>
+
+        <!-- BUNC workstation (front right) -->
+        <g id="ws-bunc" transform="translate(-30,-42)">
+          <polygon points="700,512 820,451 896,489 776,550" fill="#584732"/>
+          <polygon points="700,512 776,550 776,595 700,557" fill="#38301f"/>
+          <polygon points="776,550 896,489 896,534 776,595" fill="#463b28"/>
+          <polygon points="752,440 806,413 832,426 778,453" fill="#0b1230" stroke="#4b56a0" stroke-width="2.5"/>
+          <polygon points="757,441 803,418 827,430 781,453" fill="#2e1a08"/>
+          <g fill="#ff9a3c" opacity=".95">
+            <polygon points="766,438 788,427 788,432 766,443"/>
+            <polygon points="766,446 780,439 780,443 766,450"/>
+            <animate attributeName="opacity" values=".95;.5;.95" dur="2.1s" repeatCount="indefinite"/>
+          </g>
+          <polygon points="788,454 796,450 800,466 792,470" fill="#1a2150"/>
+          <polygon points="800,474 844,452 862,461 818,483" fill="#161c44" stroke="#3d4a94" stroke-width="1.5"/>
+          <!-- parcel boxes -->
+          <polygon points="836,432 866,417 888,428 858,443" fill="#c89f7b"/>
+          <polygon points="836,432 858,443 858,462 836,451" fill="#a5825f"/>
+          <polygon points="858,443 888,428 888,447 858,462" fill="#b58f6a"/>
+          <!-- chair -->
+          <ellipse cx="752" cy="580" rx="20" ry="9" fill="#14172e"/>
+          <rect x="748" y="544" width="8" height="34" fill="#14172e"/>
+          <polygon points="730,550 774,528 774,502 730,524" fill="#1a2150" stroke="#2b3468" stroke-width="2"/>
+        </g>
+
+        <!-- plant -->
+        <ellipse cx="920" cy="500" rx="17" ry="9" fill="#232a58"/>
+        <rect x="911" y="472" width="18" height="24" fill="#8a5a3a"/>
+        <circle cx="920" cy="458" r="17" fill="#1f7a4d"/><circle cx="907" cy="469" r="12" fill="#27965f"/><circle cx="933" cy="469" r="12" fill="#27965f"/>
+
+        <!-- ================= corridor bridge ================= -->
+        <polygon points="912,461 1010,411 1064,440 966,490" fill="#1c2350"/>
+        <line x1="912" y1="461" x2="1010" y2="411" stroke="#29e6ff" stroke-width="3" filter="url(#glowC)" opacity=".8"/>
+        <line x1="966" y1="490" x2="1064" y2="440" stroke="#29e6ff" stroke-width="3" filter="url(#glowC)" opacity=".8"/>
+
+        <!-- ================= WAR ROOM ================= -->
+        <g id="warroom">
+          <linearGradient id="wallWL" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#3a1626"/><stop offset="1" stop-color="#260e1e"/>
+          </linearGradient>
+          <linearGradient id="wallWR" x1="1" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#331222"/><stop offset="1" stop-color="#1f0b18"/>
+          </linearGradient>
+          <linearGradient id="floorW" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#3c1c30"/><stop offset="1" stop-color="#281024"/>
+          </linearGradient>
+          <!-- floor -->
+          <polygon points="1185,330 1380,430 1185,530 990,430" fill="url(#floorW)"/>
+          <g stroke="#54263f" stroke-width="1.4" opacity=".7">
+            <line x1="1055,397" y1="397" x2="1250" y2="497" opacity="0"/>
+            <line x1="1088" y1="380" x2="1283" y2="480"/>
+            <line x1="1282" y1="380" x2="1087" y2="480"/>
+          </g>
+          <!-- walls -->
+          <polygon points="990,430 1185,330 1185,190 990,290" fill="url(#wallWL)"/>
+          <polygon points="1185,330 1380,430 1380,290 1185,190" fill="url(#wallWR)"/>
+          <!-- wall screen: current issue -->
+          <polygon points="1030,388 1140,332 1140,242 1030,298" fill="#180812" stroke="#54263f" stroke-width="2.5"/>
+          <polygon points="1042,372 1128,328 1128,262 1042,306" fill="#2a0d14"/>
+          <path d="M 1078 288 l 12 -6 l 6 20 l -12 6 Z" fill="none" stroke="#ff5a5a" stroke-width="2.5"/>
+          <circle cx="1082" cy="316" r="2.6" fill="#ff5a5a">
+            <animate attributeName="opacity" values="1;.2;1" dur="1.2s" repeatCount="indefinite"/></circle>
+          <!-- pinboard map on right wall -->
+          <polygon points="1215,222 1330,281 1330,351 1215,292" fill="#1c0b16" stroke="#54263f" stroke-width="2.5"/>
+          <circle cx="1245" cy="266" r="3" fill="#ff5a5a"/><circle cx="1285" cy="296" r="3" fill="#ffd24a"/>
+          <circle cx="1262" cy="302" r="3" fill="#29e6ff"/><circle cx="1305" cy="322" r="3" fill="#3ddc84"/>
+          <line x1="1245" y1="266" x2="1262" y2="302" stroke="#ff5a5a" stroke-width="1.2" opacity=".7"/>
+          <line x1="1262" y1="302" x2="1285" y2="296" stroke="#ff5a5a" stroke-width="1.2" opacity=".7"/>
+          <!-- alert lamp -->
+          <g id="warlamp" opacity="0.25">
+            <rect x="1180" y="176" width="10" height="8" fill="#3a1626"/>
+            <circle cx="1185" cy="170" r="8" fill="#ff3b3b" filter="url(#glowP)">
+              <animate attributeName="opacity" values="1;.25;1" dur="0.9s" repeatCount="indefinite"/>
+            </circle>
+          </g>
+          <!-- neon trim (red) -->
+          <g filter="url(#glowP)" stroke="#ff3b3b" stroke-width="3.5" stroke-linecap="round">
+            <line x1="990" y1="430" x2="990" y2="290"/>
+            <line x1="990" y1="290" x2="1185" y2="190"/>
+            <line x1="1185" y1="190" x2="1380" y2="290"/>
+            <line x1="1380" y1="290" x2="1380" y2="430"/>
+          </g>
+          <g filter="url(#glowC)" stroke="#ff7b54" stroke-width="3.5" stroke-linecap="round" opacity=".9">
+            <line x1="990" y1="430" x2="1185" y2="530"/>
+            <line x1="1185" y1="530" x2="1380" y2="430"/>
+          </g>
+          <!-- sign -->
+          <g filter="url(#glowP)">
+            <rect x="1113" y="120" width="144" height="30" rx="7" fill="#12060e" stroke="#ff3b3b" stroke-width="2.2"/>
+            <text x="1185" y="141" font-family="Courier New" font-weight="bold" font-size="17" fill="#ff3b3b"
+              text-anchor="middle" letter-spacing="2">WAR ROOM</text>
+          </g>
+          <!-- conference table -->
+          <polygon points="1110,430 1185,392 1260,430 1185,468" fill="#4a2338" stroke="#6b3350" stroke-width="2"/>
+          <polygon points="1110,430 1185,468 1185,486 1110,448" fill="#2e1426"/>
+          <polygon points="1185,468 1260,430 1260,448 1185,486" fill="#3a1a2e"/>
+          <!-- documents + tablet on table -->
+          <polygon points="1152,424 1172,414 1186,421 1166,431" fill="#e8ecf2" opacity=".9"/>
+          <polygon points="1196,428 1214,419 1226,425 1208,434" fill="#c9d4ff" opacity=".8"/>
+          <polygon points="1170,437 1188,428 1200,434 1182,443" fill="#14172e" stroke="#3d4a94" stroke-width="1.2"/>
+          <circle cx="1185" cy="412" r="3" fill="#ff5a5a">
+            <animate attributeName="opacity" values=".9;.3;.9" dur="1.4s" repeatCount="indefinite"/></circle>
+        </g>
+      </svg>
+
+      <div id="agents"></div>
+    </div>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>&#9881; Pipeline — today</h2>
+  <div class="pipeline" id="pipeline"></div>
+</div>
+
+<div class="panel">
+  <h2>&#128085; Today's drops — ready to list</h2>
+  <div class="shelf">
+    <div class="shirt"><img src="{{IMG_viral}}" alt="Overthinkers Club"><div class="cap"><b>Overthinkers Club &#11088;</b><br>viral pick — est. 3am<br><span class="price">$23.99</span></div></div>
+    <div class="shirt"><img src="{{IMG_scenic}}" alt="Take The Scenic Route"><div class="cap"><b>Take The Scenic Route</b><br>retro park badge tee<br><span class="price">$24.99</span></div></div>
+    <div class="shirt"><img src="{{IMG_battery}}" alt="Social Battery Low"><div class="cap"><b>Social Battery: Low</b><br>funny introvert tee<br><span class="price">$22.99</span></div></div>
+    <div class="shirt"><img src="{{IMG_coffee}}" alt="Emotional Support Coffee"><div class="cap"><b>Emotional Support Coffee</b><br>coffee humor tee<br><span class="price">$22.99</span></div></div>
+    <div class="shirt"><img src="{{IMG_dogmama}}" alt="Dog Mama"><div class="cap"><b>Dog Mama</b><br>retro groovy dog mom tee<br><span class="price">$23.99</span></div></div>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Recent activity</h2>
+  <div class="feed" id="feed"></div>
+</div>
+
+<div class="modal-bg" id="treasury" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal">
+    <button class="close" onclick="document.getElementById('treasury').classList.remove('open')">x</button>
+    <h3>&#128176; Treasury</h3>
+    <div class="rowline"><span>Total revenue (Etsy sales)</span><span class="money" id="t-rev">$0.00</span></div>
+    <div class="rowline"><span>Spent today (listing fees / tools)</span><span class="money" id="t-spent">$0.00</span></div>
+    <div class="rowline"><span>Daily spend cap</span><span class="money">$5.00</span></div>
+    <p style="margin-top:16px; color:var(--gold)"><b>Revenue chain status:</b></p>
+    <ol>
+      <li>Printify API token — <b style="color:var(--green)">armed</b></li>
+      <li>Auto-publish (live listings, S-3XL, auto-ship) — <b style="color:var(--green)">on</b></li>
+      <li>Etsy shop — waiting for Etsy's new-seller verification (&#8776;48h)</li>
+      <li>In Printify: add payment card + set Order approval to Automatic</li>
+    </ol>
+    <p style="color:var(--dim); font-size:11px; margin-top:10px">Honest numbers only: revenue stays $0.00 until real Etsy sales sync. No fake money here.</p>
+  </div>
+</div>
+
+<script>
+const STATE = {{STATE}};
+
+/* ---------------- stats + feed ---------------- */
+const fmt = n => "$" + n.toFixed(2);
+document.getElementById("revenue").textContent = fmt(STATE.totals.total_revenue);
+document.getElementById("spent").textContent = fmt(STATE.totals.spent_today);
+document.getElementById("cap").textContent = fmt(STATE.totals.daily_cap);
+document.getElementById("t-rev").textContent = fmt(STATE.totals.total_revenue);
+document.getElementById("t-spent").textContent = fmt(STATE.totals.spent_today);
+if (STATE.totals.total_revenue > 0) document.getElementById("revenue").classList.add("live");
+
+function rel(ts){
+  const s = Math.max(1, Math.floor(Date.now()/1000 - ts));
+  if (s < 60) return s + "s ago";
+  if (s < 3600) return Math.floor(s/60) + "m ago";
+  if (s < 86400) return Math.floor(s/3600) + "h ago";
+  return Math.floor(s/86400) + "d ago";
+}
+const feed = document.getElementById("feed");
+STATE.events.forEach(e => {
+  const d = document.createElement("div"); d.className = "row";
+  d.innerHTML = `<span class="t">${rel(e.ts)}</span><span><span class="k ${e.kind}">${e.kind}</span> — ${e.message}</span>`;
+  feed.appendChild(d);
+});
+const PIPE_LABEL = {research:"Research", designs:"Designs", listings:"Listings", etsy_post:"Etsy Post"};
+const pipe = document.getElementById("pipeline");
+STATE.pipeline.forEach(p => {
+  const d = document.createElement("div"); d.className = "stagecard";
+  const icon = p.status === "done" ? "&#10004;" : p.status === "blocked" ? "&#9888;" : "&#9203;";
+  d.innerHTML = `<div class="nm">${PIPE_LABEL[p.stage]||p.stage}</div>
+    <div class="st ${p.status}">${icon} ${p.status.toUpperCase()}</div><div class="dt">${p.detail}</div>`;
+  pipe.appendChild(d);
+});
+
+/* ---------------- 24x30 hi-res pixel robots ---------------- */
+// chars: d=outline e=eyes m=metal n=metal-shadow w=white x=accent o=pocket c=chair
+const HEAD_PLAIN = [
+"...........dd...........",
+"...........d............",
+"....dddddddddddddddd....",
+"....dwwwwwwwwwwwwwwd....",
+"....dmmmmmmmmmmmmmmd....",
+"ddd.dmmmmmmmmmmmmmmd....",
+"dnd.dmmmeeemmmeeemmd....",
+"dnd.dmmmeeemmmeeemmd....",
+"ddd.dmmmeeemmmeeemmd....",
+"....dmmmmmmmmmmmmmmd....",
+"....dmmmmddddddmmmmd....",
+"....dmmmmmmmmmmmmmmd....",
+"....dnnnnnnnnnnnnnnd....",
+"....dddddddddddddddd....",
+"..........dnnd.........."];
+const HEAD_GLASSES = [
+"...........dd...........",
+"...........d............",
+"....dddddddddddddddd....",
+"....dwwwwwwwwwwwwwwd....",
+"....dmmmmmmmmmmmmmmd....",
+"ddd.dmddddddddddddmd....",
+"dnddddwwewwddwwewwdd....",
+"dnd.ddwwewwddwwewwdd....",
+"ddd.ddddddddddddddod....",
+"....dmmmmmmmmmmmmmmd....",
+"....dmmmmddddddmmmmd....",
+"....dmmmmmmmmmmmmmmd....",
+"....dnnnnnnnnnnnnnnd....",
+"....dddddddddddddddd....",
+"..........dnnd.........."];
+const RIGS = {
+matt:{
+ head: HEAD_PLAIN,
+ torsoA:[
+"...ddwwwwwwdxdwwwwwwdd..",
+"..dndwwwwwwdxdwwwwwwdnd.",
+"..dndwwwwwwwxwwwwwwwdnd.",
+"..dndwwwwwwwxwwwwwwwdnd.",
+"..dddwwwwwwwxwwwwwwwddd.",
+"....dwwwwwwwxwwwwwwd....",
+"....dwwwwwwwxwwwwwwd....",
+"....dnnnnnnnxnnnnnnd....",
+"....dddddddddddddddd...."],
+ torsoT:[
+"...ddwwwwwwdxdwwwwwwdd..",
+"....dwwwwwwdxdwwwwwwd...",
+"...ddwwwwwwwxwwwwwwwdd..",
+"..dmdwwwwwwwxwwwwwwwdmd.",
+"..ddddwwwwwwxwwwwwdddd..",
+"....dwwwwwwwxwwwwwwd....",
+"....dwwwwwwwxwwwwwwd....",
+"....dnnnnnnnxnnnnnnd....",
+"....dddddddddddddddd...."],
+ legsA:[".......dmmd..dmmd.......",".......dmmd..dmmd.......",".......dnnd..dnnd.......",".......dmmd..dmmd.......","......dmmmd..dmmmd......","......ddddd..ddddd......"],
+ legsB:["......dmmd....dmmd......","......dmmd....dmmd......","......dnnd....dnnd......","......dmmd....dmmd......","....dmmmd....dmmmd......","....ddddd....ddddd......"],
+ legsSit:[".......dmmmmmmmmd.......","........dcccccccd.......","........dc.....cd.......","........dc.....cd.......",".......dcc.....ccd......","........................"]
+},
+dennis:{
+ head: HEAD_GLASSES,
+ torsoA:[
+"...ddwwwwwwdnndwwwwwdd..",
+"..dndwwwwwwdnndwwwwwdnd.",
+"..dndwwwwxwwddwwwwwwdnd.",
+"..dndwwwwwwwddwwwwwwdnd.",
+"..dddwwwwwwwddwwwwwwddd.",
+"....dwwddwwwddwwddwd....",
+"....dwwddwwwddwwddwd....",
+"....dnnnnnnnddnnnnnd....",
+"....dddddddddddddddd...."],
+ torsoT:[
+"...ddwwwwwwdnndwwwwwdd..",
+"....dwwwwwwdnndwwwwwd...",
+"...ddwwwwxwwddwwwwwwdd..",
+"..dmdwwwwwwwddwwwwwwdmd.",
+"..ddddwwwwwwddwwwwdddd..",
+"....dwwddwwwddwwddwd....",
+"....dwwddwwwddwwddwd....",
+"....dnnnnnnnddnnnnnd....",
+"....dddddddddddddddd...."],
+ legsA:[".......dmmd..dmmd.......",".......dmmd..dmmd.......",".......dnnd..dnnd.......",".......dmmd..dmmd.......","......dmmmd..dmmmd......","......ddddd..ddddd......"],
+ legsB:["......dmmd....dmmd......","......dmmd....dmmd......","......dnnd....dnnd......","......dmmd....dmmd......","....dmmmd....dmmmd......","....ddddd....ddddd......"],
+ legsSit:[".......dmmmmmmmmd.......","........dcccccccd.......","........dc.....cd.......","........dc.....cd.......",".......dcc.....ccd......","........................"]
+},
+bunc:{
+ head: HEAD_PLAIN,
+ torsoA:[
+"...ddxxxxxxdwwdxxxxxxdd.",
+"..dxdxxxxxxdwwdxxxxxxdxd",
+"..dxdxxxxxwxxxxwxxxxxdxd",
+"..dxdxxxxxwxxxxwxxxxxdxd",
+"..dddxxxxxxxxxxxxxxxxddd",
+"....dxxdooooooooodxxd...",
+"....dxxdooooooooodxxd...",
+"....dxxxxxxxxxxxxxxxd...",
+"....dddddddddddddddd...."],
+ torsoT:[
+"...ddxxxxxxdwwdxxxxxxdd.",
+"....dxxxxxxdwwdxxxxxxd..",
+"...ddxxxxxwxxxxwxxxxxdd.",
+"..dmdxxxxxwxxxxwxxxxxdmd",
+"..ddddxxxxxxxxxxxxxdddd.",
+"....dxxdooooooooodxxd...",
+"....dxxdooooooooodxxd...",
+"....dxxxxxxxxxxxxxxxd...",
+"....dddddddddddddddd...."],
+ legsA:[".......dmmd..dmmd.......",".......dmmd..dmmd.......",".......dmmd..dmmd.......",".......dnnd..dnnd.......","......dwwwd..dwwwd......","......ddddd..ddddd......"],
+ legsB:["......dmmd....dmmd......","......dmmd....dmmd......","......dmmd....dmmd......","......dnnd....dnnd......","....dwwwd....dwwwd......","....ddddd....ddddd......"],
+ legsSit:[".......dmmmmmmmmd.......","........dcccccccd.......","........dc.....cd.......","........dc.....cd.......",".......dcc.....ccd......","........................"]
+}
+};
+function rig(id, kind){
+  const r = RIGS[id];
+  if (kind === "walk") return r.head.concat(r.torsoA, r.legsB);
+  if (kind === "typeA") return r.head.concat(r.torsoT, r.legsA);
+  if (kind === "typeB") return r.head.concat(r.torsoA, r.legsA);
+  if (kind === "sitA") return r.head.concat(r.torsoT, r.legsSit);
+  if (kind === "sitB") return r.head.concat(r.torsoA, r.legsSit);
+  return r.head.concat(r.torsoA, r.legsA);
+}
+const PALETTES = {
+  matt:  {d:"#0d1420", e:"#0d1420", m:"#c6d3de", n:"#93a5b5", w:"#f2f5f8", x:"#2456c4", c:"#2a2d38"},
+  dennis:{d:"#0d1420", e:"#0d1420", m:"#c6d3de", n:"#93a5b5", w:"#f2f5f8", x:"#d64530", o:"#c6d3de", c:"#2a2d38"},
+  bunc:  {d:"#0d1420", e:"#0d1420", m:"#c6d3de", n:"#93a5b5", w:"#e4ebf1", x:"#2c4066", o:"#243654", c:"#2a2d38"}
+};
+function spriteSVG(pal, grid, extra){
+  let r = "";
+  grid.forEach((row,y)=>{ [...row].forEach((c,x)=>{
+    if(c!=="." && pal[c]) r += `<rect x="${x}" y="${y}" width="1.06" height="1.06" fill="${pal[c]}"/>`;
+  });});
+  return `<svg class="sprite" viewBox="0 0 24 30">${r}${extra||""}</svg>`;
+}
+const EXTRAS = {
+  // MATT: briefcase in left hand
+  matt:`<g><rect x="0.9" y="22.6" width="6" height="4.8" rx="0.5" fill="#3a4656" stroke="#0d1420" stroke-width="0.5"/>
+    <path d="M 3 22.6 v -1 h 1.8 v 1" fill="none" stroke="#0d1420" stroke-width="0.5"/>
+    <rect x="3.3" y="24.5" width="1.2" height="1" fill="#c6d3de"/></g>`,
+  // DENNIS: clipboard in right hand + blue pen beside the red one
+  dennis:`<g><rect x="19" y="16.6" width="4.4" height="6.2" rx="0.5" fill="#3a4656" stroke="#0d1420" stroke-width="0.5"/>
+    <rect x="20.4" y="16" width="1.6" height="1.1" rx="0.3" fill="#c6d3de" stroke="#0d1420" stroke-width="0.35"/>
+    <line x1="19.9" y1="18.6" x2="22.5" y2="18.6" stroke="#c6d3de" stroke-width="0.4"/>
+    <line x1="19.9" y1="19.8" x2="22.5" y2="19.8" stroke="#c6d3de" stroke-width="0.4"/>
+    <rect x="10.1" y="17.1" width="0.85" height="1.9" fill="#2456c4"/></g>`,
+  // BUNC: hood shape behind the head
+  bunc:`<path d="M 4.4 14.8 Q 3.4 12.6 4.8 11.4 M 19.6 14.8 Q 20.6 12.6 19.2 11.4" fill="none" stroke="#2c4066" stroke-width="1.1"/>`
+};
+
+/* ---------------- room geometry ---------------- */
+const STATIONS = {
+  center:{x:530, y:566}, rug:{x:530, y:590}, coffee:{x:196, y:472},
+  rack:{x:530, y:400}, plant:{x:872, y:510}, window:{x:260, y:452}, boxes:{x:806, y:448}
+};
+const CHAIRS  = {dennis:{x:300, y:562}, matt:{x:612, y:458}, bunc:{x:722, y:564}};
+const MONITORS = {dennis:{x:292, y:390}, matt:{x:652, y:284}, bunc:{x:762, y:390}};
+function glowEl(id){ return document.getElementById("mg-"+id); }
+
+// agents are sealed inside these floors: factory, corridor bridge, war room
+const FLOORS = [
+  [[118,475],[530,264],[942,475],[530,686]],
+  [[900,455],[1010,398],[1075,432],[965,489]],
+  [[1012,430],[1185,342],[1358,430],[1185,518]]
+];
+const ROOM_C = [{x:530,y:492},{x:988,y:462},{x:1185,y:430}];
+function inPoly(p, x, y){
+  let inside = false;
+  for (let i = 0, j = p.length-1; i < p.length; j = i++){
+    const [xi, yi] = p[i], [xj, yj] = p[j];
+    if ((yi > y) !== (yj > y) && x < (xj-xi)*(y-yi)/(yj-yi)+xi) inside = !inside;
+  }
+  return inside;
+}
+function insideFloor(x, y){ return FLOORS.some(p => inPoly(p, x, y)); }
+function clampToFloor(x, y){
+  if (insideFloor(x, y)) return [x, y];
+  const c = x > 1030 ? ROOM_C[2] : (x > 930 ? ROOM_C[1] : ROOM_C[0]);
+  for (let t = 0.06; t <= 1; t += 0.06){
+    const nx = x + (c.x - x)*t, ny = y + (c.y - y)*t;
+    if (insideFloor(nx, ny)) return [nx, ny];
+  }
+  return [c.x, c.y];
+}
+// doorway waypoints between the factory and the war room
+const DOOR_MAIN = [940, 470], DOOR_WAR = [1040, 442];
+const WAR_SEATS = {dennis:{x:1096, y:474}, matt:{x:1185, y:512}, bunc:{x:1274, y:474}};
+
+const AGENT_DEFS = [
+  {id:"dennis", name:"DENNIS", role:"Researcher",
+   hangouts:["window","coffee","center","rack"],
+   lines:["scanning etsy trends...","retro park tees: rising","introvert humor: hot niche","niche report -> matt","dog mom searches +18%","checking competitor tags","teacher tees spike soon"]},
+  {id:"matt", name:"MATT", role:"Manager",
+   hangouts:["center","rack","rug","coffee"],
+   lines:["reviewing new designs...","auto-mode: approved","budget check: ok","seo titles look clean","quality gate passed","bunc: ship it"]},
+  {id:"bunc", name:"BUNC", role:"Etsy Executor",
+   hangouts:["boxes","center","plant","rug"],
+   lines:["uploading to printify...","publishing listing...","sizes s-3xl enabled","auto-ship: armed","live on etsy soon","tags locked in"]}
+];
+
+const agentsRoot = document.getElementById("agents");
+// monitor glow overlays
+Object.entries(MONITORS).forEach(([id, p]) => {
+  const g = document.createElement("div");
+  g.className = "mglow"; g.id = "mg-" + id;
+  g.style.left = p.x + "px"; g.style.top = p.y + "px";
+  agentsRoot.appendChild(g);
+});
+// hologram t-shirt above BUNC's monitor
+const holo = document.createElement("div");
+holo.className = "holo"; holo.style.left = "762px"; holo.style.top = "350px";
+holo.innerHTML = `<svg viewBox="0 0 24 24"><path d="M8 3 L3 6 L5 10 L7 9 L7 21 L17 21 L17 9 L19 10 L21 6 L16 3 Q12 6 8 3 Z"
+  fill="rgba(41,230,255,.25)" stroke="#29e6ff" stroke-width="1.1"/></svg>`;
+agentsRoot.appendChild(holo);
+// drifting neon dust
+for (let i = 0; i < 14; i++){
+  const d = document.createElement("div");
+  d.className = "dust";
+  d.style.left = (240 + Math.random()*580) + "px";
+  d.style.top = (420 + Math.random()*240) + "px";
+  d.style.background = Math.random() < 0.5 ? "rgba(41,230,255,.8)" : "rgba(255,45,120,.7)";
+  d.style.animationDuration = (5 + Math.random()*7) + "s";
+  d.style.animationDelay = (Math.random()*6) + "s";
+  agentsRoot.appendChild(d);
+}
+
+/* ---------------- PIXEL the office cat ---------------- */
+const CAT_PAL = {k:"#1b1c24", e:"#ffd24a"};
+const CAT_A = ["............","............","............","............","............","............","............","............","............","............",
+".......k..k.","k......kkkk.",".k....kkeek.","..kk.kkkkkk.","..kkkkkkkk..","..kk.kk.kk.."];
+const CAT_B = ["............","............","............","............","............","............","............","............","............","............",
+".......k..k.",".......kkkk.","kkk...kkeek.","...k.kkkkkk.","..kkkkkkkk..","..k.kk..kk.."];
+const CAT_S = ["............","............","............","............","............","............","............","............","............","............",
+"............",".......k..k.","..kkk..kkkk.",".kkkkkkkkkk.",".kkkkkkkkk..","............"];
+function catSVG(grid){
+  let r = "";
+  grid.forEach((row,y)=>{ [...row].forEach((c,x)=>{
+    if(c!=="." && CAT_PAL[c]) r += `<rect x="${x}" y="${y}" width="1.05" height="1.05" fill="${CAT_PAL[c]}"/>`;
+  });});
+  return `<svg viewBox="0 0 12 16">${r}</svg>`;
+}
+const catEl = document.createElement("div");
+catEl.className = "cat";
+catEl.innerHTML = `<div class="zzz" id="catzzz">z Z z</div><div class="catspr">${catSVG(CAT_A)}</div>`;
+agentsRoot.appendChild(catEl);
+const cat = {x:560, y:600, tx:450, ty:620, state:"walk", t:0, frame:0, ft:0};
+catEl.style.left = cat.x+"px"; catEl.style.top = cat.y+"px";
+function catTick(dt){
+  catEl.style.zIndex = Math.floor(cat.y);
+  if (cat.state === "walk"){
+    const dx = cat.tx-cat.x, dy = cat.ty-cat.y, dist = Math.hypot(dx,dy);
+    if (dist < 3){
+      if (Math.random() < 0.45){
+        cat.state = "sleep"; cat.t = 6000 + Math.random()*9000;
+        catEl.querySelector(".catspr").innerHTML = catSVG(CAT_S);
+        document.getElementById("catzzz").classList.add("show");
+      } else { cat.state = "pause"; cat.t = 1500 + Math.random()*3000; }
+    } else {
+      const sp = 0.03*dt;
+      cat.x += dx/dist*sp; cat.y += dy/dist*sp;
+      [cat.x, cat.y] = clampToFloor(cat.x, cat.y);
+      catEl.classList.toggle("flip", dx < 0);
+      cat.ft += dt;
+      if (cat.ft > 200){ cat.ft = 0; cat.frame = 1-cat.frame;
+        catEl.querySelector(".catspr").innerHTML = catSVG(cat.frame ? CAT_B : CAT_A); }
+      catEl.style.left = cat.x+"px"; catEl.style.top = cat.y+"px";
+    }
+  } else {
+    cat.t -= dt;
+    if (cat.t <= 0){
+      document.getElementById("catzzz").classList.remove("show");
+      catEl.querySelector(".catspr").innerHTML = catSVG(CAT_A);
+      const warTrip = Math.random() < 0.2;
+      [cat.tx, cat.ty] = warTrip ? clampToFloor(1080 + Math.random()*200, 400 + Math.random()*90)
+                                 : clampToFloor(240 + Math.random()*580, 460 + Math.random()*210);
+      cat.state = "walk";
+    }
+  }
+}
+
+/* ---------------- agents ---------------- */
+function depthScale(y){
+  return 0.72 + Math.max(0, Math.min(1, (y - 380)/300)) * 0.4;
+}
+const live = {};
+AGENT_DEFS.forEach(def=>{
+  const st = STATE.agents[def.id] || {status:"idle"};
+  const el = document.createElement("div");
+  el.className = "agent"; el.id = "ag-" + def.id;
+  const badge = st.status === "blocked" ? "blocked" : "idle";
+  el.innerHTML = `<div class="bubble" id="bb-${def.id}"></div>
+    <div class="sprwrap bob">${spriteSVG(PALETTES[def.id], rig(def.id, "body"), EXTRAS[def.id])}</div>
+    <div class="tag"><div class="nm">${def.name}</div><div class="rl">${def.role}</div>
+    <span class="badge ${badge}" id="bg-${def.id}">${badge}</span></div>`;
+  agentsRoot.appendChild(el);
+  const p = CHAIRS[def.id];
+  live[def.id] = {def, el, x:p.x, y:p.y, tx:p.x, ty:p.y, state:"idle",
+                  wait: 800 + Math.random()*2200, frame:0, ft:0, stall:0, prevDist:1e9};
+  el.style.left = p.x+"px"; el.style.top = p.y+"px"; el.style.zIndex = Math.floor(p.y);
+  el.style.transform = `translate(-50%,-100%) scale(${depthScale(p.y)})`;
+});
+
+function setBadge(id, txt){
+  const b = document.getElementById("bg-"+id);
+  const cls = txt === "working" ? "working" : (txt === "blocked" ? "blocked" : "idle");
+  b.className = "badge " + cls; b.textContent = txt;
+}
+function say(id, text, ms){
+  const b = document.getElementById("bb-"+id);
+  b.textContent = text; b.classList.add("show");
+  setTimeout(()=>b.classList.remove("show"), ms||2600);
+}
+function setSprite(a, kind){
+  a.el.querySelector(".sprwrap").innerHTML =
+    spriteSVG(PALETTES[a.def.id], rig(a.def.id, kind), EXTRAS[a.def.id]);
+}
+function beginSit(a){
+  a.state = "sit"; a.workT = 9000 + Math.random()*9000; a.ft = 0;
+  a.el.querySelector(".sprwrap").classList.remove("bob");
+  setSprite(a, "sitA");
+  const g = glowEl(a.def.id); if (g) g.classList.add("on");
+  const task = (STATE.agents[a.def.id] || {}).task;
+  say(a.def.id, task ? "working: " + task : a.def.lines[0], 3400);
+}
+function beginWork(a){
+  a.state = "work"; a.workT = 5000 + Math.random()*6000; a.ft = 0;
+  const line = a.def.lines[Math.floor(Math.random()*a.def.lines.length)];
+  say(a.def.id, line, Math.min(a.workT, 3400));
+}
+function prepMove(a){
+  const g = glowEl(a.def.id); if (g) g.classList.remove("on");
+  a.el.querySelector(".sprwrap").classList.add("bob");
+  setSprite(a, "body");
+}
+function routeTo(a, tx, ty, opts){
+  prepMove(a);
+  const fromWar = a.x > 960, toWar = tx > 960;
+  a.path = [];
+  if (fromWar !== toWar) a.path = fromWar ? [DOOR_WAR.slice(), DOOR_MAIN.slice()] : [DOOR_MAIN.slice(), DOOR_WAR.slice()];
+  a.path.push([tx, ty]);
+  const n = a.path.shift();
+  a.tx = n[0]; a.ty = n[1];
+  a.sitNext = !!(opts && opts.sit); a.meetNext = !!(opts && opts.meet);
+  a.state = "walk"; a.stall = 0; a.prevDist = 1e9;
+  setBadge(a.def.id, "working");
+}
+function beginMeeting(a){
+  a.state = "meeting"; a.ft = 0;
+  a.el.querySelector(".sprwrap").classList.remove("bob");
+  setSprite(a, "sitA");
+  say(a.def.id, WAR_LINES[a.def.id][0], 3200);
+}
+function endTask(a){
+  const g = glowEl(a.def.id); if (g) g.classList.remove("on");
+  a.el.querySelector(".sprwrap").classList.add("bob");
+  setSprite(a, "body");
+  a.state = "idle"; a.wait = 1400 + Math.random()*3000;
+  const st = STATE.agents[a.def.id];
+  setBadge(a.def.id, st && st.status === "blocked" ? "blocked" : "idle");
+}
+
+/* ---------------- war room: real-problem meetings ---------------- */
+const ALERT = (STATE.alert && STATE.alert.active) ||
+  STATE.pipeline.some(p => p.status === "blocked" || p.status === "failed");
+const ALERT_REASON = (STATE.alert && STATE.alert.reason) ||
+  (STATE.pipeline.find(p => p.status === "blocked" || p.status === "failed") || {}).detail || "issue detected";
+const WAR_LINES = {
+  dennis:["issue: " + ALERT_REASON, "root cause: etsy id review", "eta: ~48h from upload", "risk: none, queue holds", "idea: prep 6 more designs"],
+  matt:  ["convening: " + ALERT_REASON, "plan: wait, don't re-upload", "watch inbox for @etsy.com", "idea: 2x daily drops later", "idea: holiday niches in q4"],
+  bunc:  ["publish queue: on hold", "printify chain: healthy", "retry: first run after unlock", "idea: bundle pricing test", "listings ready: 5+"]
+};
+let meetingUntil = 0;
+let nextConvene = ALERT ? performance.now() + 6000 : Infinity;
+function convene(){
+  meetingUntil = performance.now() + 22000;
+  Object.values(live).forEach(a => {
+    const seat = WAR_SEATS[a.def.id];
+    routeTo(a, seat.x, seat.y, {meet:true});
+  });
+  document.getElementById("warlamp").setAttribute("opacity", "1");
+}
+if (ALERT){
+  const bar = document.getElementById("alertbar");
+  bar.classList.add("on");
+  bar.innerHTML = "&#9888; <b>ISSUE DETECTED:</b> " + ALERT_REASON + " — agents convening in the <b>WAR ROOM</b>";
+  document.title = "\u26a0 WAR ROOM — Shirt Factory";
+  document.getElementById("warlamp").setAttribute("opacity", "1");
+  if ("Notification" in window){
+    const fire = () => new Notification("Shirt Factory — War Room in session", {body: ALERT_REASON});
+    if (Notification.permission === "granted") setTimeout(fire, 1200);
+    else if (Notification.permission !== "denied"){
+      window.addEventListener("click", () => Notification.requestPermission().then(p => { if (p === "granted") fire(); }), {once:true});
+    }
+  }
+} else {
+  document.getElementById("warlamp").setAttribute("opacity", "0.25");
+}
+
+let last = performance.now();
+function tick(now){
+  const dt = Math.min(60, now - last); last = now;
+  Object.values(live).forEach(a=>{
+    if (a.state === "idle"){
+      a.wait -= dt;
+      if (a.wait <= 0){
+        if (Math.random() < 0.68){
+          const c = CHAIRS[a.def.id];
+          routeTo(a, c.x, c.y, {sit:true});
+        } else {
+          const spots = a.def.hangouts;
+          const dest = STATIONS[spots[Math.floor(Math.random()*spots.length)]];
+          const jx = (Math.random()-0.5)*36, jy = (Math.random()-0.5)*18;
+          const [cx2, cy2] = clampToFloor(dest.x + jx, dest.y + jy);
+          routeTo(a, cx2, cy2, {});
+        }
+      }
+    } else if (a.state === "walk"){
+      const dx = a.tx - a.x, dy = a.ty - a.y;
+      const dist = Math.hypot(dx, dy);
+      // anti-glitch: if progress stalls (wall corner), just arrive
+      if (dist >= a.prevDist - 0.01) a.stall += dt; else a.stall = 0;
+      a.prevDist = dist;
+      if (dist < 3 || a.stall > 450){
+        if (a.path && a.path.length){
+          const n = a.path.shift();
+          a.tx = n[0]; a.ty = n[1]; a.stall = 0; a.prevDist = 1e9;
+        } else if (a.meetNext) beginMeeting(a);
+        else if (a.sitNext) beginSit(a);
+        else beginWork(a);
+      } else {
+        const speed = 0.055 * dt;
+        a.x += dx/dist*Math.min(speed, dist); a.y += dy/dist*Math.min(speed, dist);
+        [a.x, a.y] = clampToFloor(a.x, a.y);
+        a.el.classList.toggle("flip", dx < 0);
+        a.ft += dt;
+        if (a.ft > 160){ a.ft = 0; a.frame = 1 - a.frame; setSprite(a, a.frame ? "walk" : "body"); }
+        a.el.style.left = a.x+"px"; a.el.style.top = a.y+"px";
+        a.el.style.zIndex = Math.floor(a.y);
+        a.el.style.transform = `translate(-50%,-100%) scale(${depthScale(a.y)})`;
+      }
+    } else if (a.state === "work"){
+      a.workT -= dt; a.ft += dt;
+      if (a.ft > 210){ a.ft = 0; a.frame = 1 - a.frame; setSprite(a, a.frame ? "typeB" : "typeA"); }
+      if (a.workT <= 0) endTask(a);
+    } else if (a.state === "meeting"){
+      a.ft += dt;
+      if (a.ft > 260){ a.ft = 0; a.frame = 1 - a.frame; setSprite(a, a.frame ? "sitB" : "sitA"); }
+      if (Math.random() < dt/7000){
+        const L = WAR_LINES[a.def.id];
+        say(a.def.id, L[1 + Math.floor(Math.random()*(L.length-1))], 2800);
+      }
+      if (performance.now() > meetingUntil){
+        routeTo(a, CHAIRS[a.def.id].x, CHAIRS[a.def.id].y, {sit:true});
+      }
+    } else if (a.state === "sit"){
+      a.workT -= dt; a.ft += dt;
+      if (a.ft > 230){ a.ft = 0; a.frame = 1 - a.frame; setSprite(a, a.frame ? "sitB" : "sitA"); }
+      if (Math.random() < dt/9000){
+        say(a.def.id, a.def.lines[Math.floor(Math.random()*a.def.lines.length)], 2600);
+      }
+      if (a.workT <= 0) endTask(a);
+    }
+  });
+  if (ALERT && now > nextConvene){
+    nextConvene = now + 75000 + Math.random()*30000;
+    convene();
+  }
+  if (!ALERT || now > meetingUntil + 2000){
+    document.getElementById("warlamp").setAttribute("opacity", ALERT ? "0.6" : "0.25");
+  }
+  catTick(dt);
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+
+/* responsive stage scaling */
+function scaleStage(){
+  const frame = document.getElementById("roomframe");
+  const stage = document.getElementById("stage");
+  const w = frame.clientWidth;
+  const s = Math.min(1, w/1400);
+  stage.style.transform = `scale(${s})`;
+  frame.style.height = (800*s) + "px";
+}
+scaleStage(); window.addEventListener("resize", scaleStage);
+
+/* live cam clock */
+setInterval(()=>{
+  const el = document.getElementById("camclock");
+  if (el) el.textContent = new Date().toTimeString().slice(0,8);
+}, 1000);
+</script>
+</body>
+</html>

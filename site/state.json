@@ -1,0 +1,69 @@
+{
+  "updated": 1795076666,
+  "totals": {
+    "total_revenue": 0.0,
+    "spent_today": 0.0,
+    "daily_cap": 5.0
+  },
+  "agents": {
+    "dennis": {
+      "role": "Researcher",
+      "status": "done",
+      "task": "5 niches researched"
+    },
+    "matt": {
+      "role": "Manager",
+      "status": "done",
+      "task": "5 designs re-verified with real fonts; dark shirts only; pricing set"
+    },
+    "bunc": {
+      "role": "Etsy Executor",
+      "status": "waiting",
+      "task": "ready to publish 5 shirts to TheMajestyShop \u2014 awaiting Ali's go-ahead"
+    }
+  },
+  "pipeline": [
+    {
+      "stage": "research",
+      "status": "done",
+      "detail": "retro travel, introvert humor, coffee humor, dog mom, overthinkers"
+    },
+    {
+      "stage": "designs",
+      "status": "done",
+      "detail": "5 print-ready PNGs (4500x5400, transparent), visually verified"
+    },
+    {
+      "stage": "listings",
+      "status": "done",
+      "detail": "5 listings: titles, 13 tags each, descriptions, .99 pricing, 2XL +$4 / 3XL +$6"
+    },
+    {
+      "stage": "etsy_post",
+      "status": "waiting",
+      "detail": "printify connected and tested \u2014 waiting for go-ahead to publish live"
+    }
+  ],
+  "events": [
+    {
+      "ts": 1795076666,
+      "kind": "status_change",
+      "message": "matt \u2014 test product created and removed: costs $11.29 S-XL, $13.85 2XL, $16.21 3XL"
+    },
+    {
+      "ts": 1795076636,
+      "kind": "status_change",
+      "message": "bunc \u2014 printify unblocked in claude code: shop TheMajestyShop connected"
+    },
+    {
+      "ts": 1795076606,
+      "kind": "created",
+      "message": "workspace rebuilt in claude code \u2014 5 designs regenerated with Poppins/Lora + verified"
+    }
+  ],
+  "alert": {
+    "active": false,
+    "reason": "",
+    "severity": "info"
+  }
+}
