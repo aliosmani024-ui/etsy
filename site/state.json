@@ -1,5 +1,5 @@
 {
-  "updated": 1795076666,
+  "updated": 1795077120,
   "totals": {
     "total_revenue": 0.0,
     "spent_today": 0.0,
@@ -18,8 +18,8 @@
     },
     "bunc": {
       "role": "Etsy Executor",
-      "status": "waiting",
-      "task": "ready to publish 5 shirts to TheMajestyShop \u2014 awaiting Ali's go-ahead"
+      "status": "done",
+      "task": "5 shirts live on TheMajestyShop"
     }
   },
   "pipeline": [
@@ -40,11 +40,16 @@
     },
     {
       "stage": "etsy_post",
-      "status": "waiting",
-      "detail": "printify connected and tested \u2014 waiting for go-ahead to publish live"
+      "status": "done",
+      "detail": "5 live Etsy listings (verified via Printify), 30 dark variants each"
     }
   ],
   "events": [
+    {
+      "ts": 1795077120,
+      "kind": "posted",
+      "message": "bunc \u2014 verified: 5 of 5 shirts linked to live etsy listings on TheMajestyShop"
+    },
     {
       "ts": 1795076666,
       "kind": "status_change",

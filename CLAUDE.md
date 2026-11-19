@@ -24,10 +24,13 @@ step by step.
 ## Current status (2026-11-19, Claude Code)
 
 - Printify works from Claude Code cloud sessions. Shop: **TheMajestyShop** (id 28245173).
-- 5 designs + listings are ready. A test product was created and deleted; nothing is
-  live on Etsy until Ali says "publish".
-- Publish: `DRY_RUN=0 REVIEW_FIRST=0 python3 scripts/publish_printify.py`, then verify
-  with GET /v1/shops/28245173/products.json and report the real count.
+- **5 shirts LIVE on Etsy** (published 2026-11-19, verified: each Printify product has
+  an Etsy listing id): Overthinkers Club 4620818139, Take The Scenic Route 4620824240,
+  Social Battery 4620824320, Emotional Support Coffee 4620818327, Dog Mama 4620824446.
+- Do NOT re-run the publisher on listings/listings.json as-is: it would create duplicates.
+  New drops need a fresh listings.json containing only the new shirts.
+- Publishing is async: right after publish, products show is_locked=true; poll
+  GET /v1/shops/28245173/products.json until is_locked=false and external.id is set.
 
 ## Setup gotchas (learned the hard way)
 
